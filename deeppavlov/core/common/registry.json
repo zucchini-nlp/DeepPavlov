@@ -13,6 +13,7 @@
   "bilstm_nn": "deeppavlov.models.ranking.bilstm_siamese_network:BiLSTMSiameseNetwork",
   "boolqa_reader": "deeppavlov.dataset_readers.boolqa_reader:BoolqaReader",
   "bow": "deeppavlov.models.embedders.bow_embedder:BoWEmbedder",
+  "bpr": "deeppavlov.models.doc_retrieval.bpr:BPR",
   "capitalization_featurizer": "deeppavlov.models.preprocessors.capitalization:CapitalizationPreprocessor",
   "char_splitter": "deeppavlov.models.preprocessors.char_splitter:CharSplitter",
   "char_splitting_lowercase_preprocessor": "deeppavlov.models.preprocessors.capitalization:CharSplittingLowercasePreprocessor",

@@ -5,6 +5,7 @@
   "basic_classification_iterator": "deeppavlov.dataset_iterators.basic_classification_iterator:BasicClassificationDatasetIterator",
   "basic_classification_reader": "deeppavlov.dataset_readers.basic_classification_reader:BasicClassificationDatasetReader",
   "boolqa_reader": "deeppavlov.dataset_readers.boolqa_reader:BoolqaReader",
+  "bpr": "deeppavlov.models.doc_retrieval.bpr:BPR",
   "conll2003_reader": "deeppavlov.dataset_readers.conll2003_reader:Conll2003DatasetReader",
   "cos_sim_classifier": "deeppavlov.models.classifiers.cos_sim_classifier:CosineSimilarityClassifier",
   "data_fitting_iterator": "deeppavlov.core.data.data_fitting_iterator:DataFittingIterator",
@@ -104,6 +105,7 @@
   "typos_wikipedia_reader": "deeppavlov.dataset_readers.typos_reader:TyposWikipedia",
   "ubuntu_v2_reader": "deeppavlov.dataset_readers.ubuntu_v2_reader:UbuntuV2Reader",
   "wiki_parser": "deeppavlov.models.kbqa.wiki_parser:WikiParser",
+  "wiki_sqlite_vocab_ru": "deeppavlov.vocabs.wiki_sqlite:WikiSQLiteVocabRu",
   "wiki_sqlite_vocab": "deeppavlov.vocabs.wiki_sqlite:WikiSQLiteVocab",
   "wikitionary_100K_vocab": "deeppavlov.vocabs.typos:Wiki100KDictionary"
 }

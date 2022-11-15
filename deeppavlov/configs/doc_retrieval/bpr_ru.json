@@ -1,0 +1,36 @@
+{
+    "chainer": {
+      "in": ["questions"],
+      "out": ["par_text"],
+      "pipe": [
+        {
+          "class_name": "bpr",
+          "load_path": "/archive/evseev/BPR_new",
+          "query_encoder_file": "bpr/query_encoder.pth.tar",
+          "bpr_index": "faiss_ivf_short_par_v2.idx",
+          "pretrained_model": "DeepPavlov/rubert-base-cased",
+          "binary": false,
+          "in": ["questions"],
+          "out": ["par_ids"]
+        },
+        {
+          "class_name": "wiki_sqlite_vocab_ru",
+          "in": ["par_ids"],
+          "out": ["par_text"],
+          "load_path": "/archive/evseev/RuWiki/wiki_archives/wikipedia_paragraphs_100"
+        }
+      ]
+    },
+    "metadata": {
+      "variables": {
+        "ROOT_PATH": "/archive/evseev/.deeppavlov",
+        "DOWNLOADS_PATH": "{ROOT_PATH}/downloads",
+        "MODELS_PATH": "{ROOT_PATH}/models/",
+        "MODEL_PATH": "{MODELS_PATH}/bpr/ru"
+      }
+    },
+    "requirements": [
+      "{DEEPPAVLOV_PATH}/requirements/faiss.txt"
+    ]
+  }
+  

@@ -126,7 +126,6 @@
     "log_every_n_batches": 50,
     "val_every_n_batches": 500,
     "batch_size": 20,
-    "valid_batch_size": 60,
     "valid_batch_size": 32,
     "pytest_max_batches": 2,
     "pytest_batch_size": 5,
@@ -165,16 +164,16 @@
   },
   "metadata": {
     "variables": {
-      "LOWERCASE": false,
-      "TRANSFORMER": "bert-base-cased",
+      "LOWERCASE": true,
+      "TRANSFORMER": "bert-base-uncased",
       "ROOT_PATH": "~/.deeppavlov",
       "DOWNLOADS_PATH": "{ROOT_PATH}/downloads",
       "MODELS_PATH": "{ROOT_PATH}/models",
-      "MODEL_PATH": "{MODELS_PATH}/squad2_bert"
+      "MODEL_PATH": "{MODELS_PATH}/squad_bert_en/{TRANSFORMER}"
     },
     "download": [
       {
-        "url": "http://files.deeppavlov.ai/v1/squad/squad2_bert.tar.gz",
+        "url": "http://files.deeppavlov.ai/v1/squad/model.cp",
         "subdir": "{MODEL_PATH}"
       }
     ]

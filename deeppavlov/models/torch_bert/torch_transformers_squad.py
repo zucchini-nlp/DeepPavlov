@@ -20,7 +20,7 @@ from typing import List, Tuple, Optional, Dict
 import numpy as np
 import torch
 from overrides import overrides
-from transformers import AutoModelForQuestionAnswering, AutoConfig
+from transformers import AutoModelForQuestionAnswering, AutoModel, AutoConfig
 from transformers.data.processors.utils import InputFeatures
 
 from deeppavlov.core.commands.utils import expand_path
@@ -34,6 +34,23 @@ logger = getLogger(__name__)
 def softmax_mask(val, mask):
     inf = 1e30
     return -inf * (1 - mask.to(torch.float32)) + val
+
+
+class ReaderDPR(torch.nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.encoder = AutoModel.from_config(config=config)
+        self.qa_outputs = torch.nn.Linear(config.hidden_size, 2)
+        self.qa_classifier = torch.nn.Linear(config.hidden_size, 1)
+
+    def forward(self, input_ids, attention_mask, token_type_ids):
+        out = self.encoder(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+        logits = self.qa_outputs(out[0])
+        start_logits, end_logits = logits.split(1, dim=-1)
+        start_logits = start_logits.squeeze(-1)
+        end_logits = end_logits.squeeze(-1)
+        rank_logits = self.qa_classifier(out[0][:, 0, :])
+        return rank_logits, start_logits, end_logits
 
 
 @register('torch_transformers_squad')
@@ -204,10 +221,7 @@ class TorchTransformersSquad(TorchModel):
                 input_ = {arg_name: arg_value for arg_name, arg_value in input_.items()
                           if arg_name in self.accepted_keys}
                 # Forward pass, calculate logit predictions
-                outputs = self.model(**input_)
-
-                logits_st = outputs.start_logits
-                logits_end = outputs.end_logits
+                logits_rank, logits_st, logits_end = self.model(**input_)
 
                 bs = b_input_ids.size()[0]
                 seq_len = b_input_ids.size()[-1]
@@ -219,7 +233,7 @@ class TorchTransformersSquad(TorchModel):
 
                 start_probs = torch.nn.functional.softmax(logits_st, dim=-1)
                 end_probs = torch.nn.functional.softmax(logits_end, dim=-1)
-                scores = torch.tensor(1) - start_probs[:, 0] * end_probs[:, 0]  # ok
+                scores = logits_rank.squeeze(1)
 
                 outer = torch.matmul(start_probs.view(*start_probs.size(), 1),
                                      end_probs.view(end_probs.size()[0], 1, end_probs.size()[1]))
@@ -242,7 +256,8 @@ class TorchTransformersSquad(TorchModel):
             start_pred = start_pred.detach().cpu().numpy()
             end_pred = end_pred.detach().cpu().numpy()
             logits = logits.detach().cpu().numpy().tolist()
-            scores = scores.detach().cpu().numpy().tolist()
+            scores = scores.detach().cpu().numpy()
+            scores = (1 / (1 + np.exp(-scores))).tolist()
 
             for j, (start_pred_elem, end_pred_elem, logits_elem, scores_elem) in \
                     enumerate(zip(start_pred, end_pred, logits, scores)):
@@ -275,7 +290,8 @@ class TorchTransformersSquad(TorchModel):
                                                 output_attentions=False,
                                                 output_hidden_states=False)
 
-            self.model = AutoModelForQuestionAnswering.from_pretrained(self.pretrained_bert, config=config)
+            self.model = ReaderDPR(config)
+            self.model.load_state_dict(torch.load(f"{self.load_path}.cp")["model_dict"], strict=False)
 
         elif self.bert_config_file and Path(self.bert_config_file).is_file():
             self.bert_config = AutoConfig.from_json_file(str(expand_path(self.bert_config_file)))

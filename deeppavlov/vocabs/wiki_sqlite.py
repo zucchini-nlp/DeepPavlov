@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import dataclasses
 from logging import getLogger
-from typing import List, Any, Optional, Union
+from pathlib import Path
+import pickle
+from typing import List, Any, Optional, Union, Iterator
 
 from deeppavlov.core.common.registry import register
 from deeppavlov.core.models.component import Component
@@ -61,3 +64,69 @@ class WikiSQLiteVocab(SQLiteDataIterator, Component):
             all_contents.append(contents)
 
         return all_contents
+
+
+
+@register('wiki_sqlite_vocab_ru')
+class WikiSQLiteVocabRu(Component):
+    """Get content from Russian wikipedia dataset by document ids.
+
+    Args:
+        load_path: a path to local folder
+    """
+
+    def __init__(self, load_path: str, **kwargs) -> None:
+        self.passages = PassageDB(load_path)
+
+    def __call__(self, doc_ids: Optional[List[List[Any]]] = None) -> List[Union[str, List[str]]]:
+        """Get the contents of files, stacked by space or as they are.
+
+        Args:
+            doc_ids: a batch of lists of ids to get contents for
+
+        Returns:
+            a list of contents / list of lists of contents
+        """
+
+        if not doc_ids:
+            logger.warning('No doc_ids are provided, return an empty list')
+            all_contents = []
+        else:
+            all_contents = [[] for _ in range(len(doc_ids))]
+            for num, top_ids in enumerate(doc_ids):
+                for idx in top_ids:
+                    all_contents[num].append(self.passages[idx].text)
+        
+        return all_contents
+
+
+@dataclasses.dataclass
+class Passage:
+    id: int
+    title: str
+    text: str
+
+
+class PassageDB:
+    def __init__(self, input_path: Path):
+        self.files_paths = list(Path(input_path).iterdir())
+        self._db = []
+        for filepath in self.files_paths:
+            if str(filepath).endswith("pickle"):
+                with open(filepath, "rb") as psg:
+                    self._db.extend(pickle.load(psg))
+
+    def __reduce__(self):
+        return (self.__class__, (self._input_file,))
+
+    def __len__(self):
+        return len(self._db)
+
+    def __getitem__(self, id_: int) -> Passage:
+        title, text = self._db[id_][1], self._db[id_][2]
+        return Passage(id_, title, text)
+
+    def __iter__(self) -> Iterator[Passage]:
+        for id_num, psg in enumerate(self._db):
+            title, text = psg[1], psg[2]
+            yield Passage(id_num, title, text)
